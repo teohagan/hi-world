@@ -1,13 +1,724 @@
 <!DOCTYPE html>
 <html>
+this one works gets lat and long and looks up address
 <head>
-<title>Page Title</title>
+<title>Distance Matrix service</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://www.qwikdocs.com/qdcc/aaabtest3.js"></script>
+<link rel="stylesheet" href="https://www.qwikdocs.com/qdcc/apm7.css">
+<link rel="stylesheet" href="https://www.qwikdocs.com/qdcc/aapm.css">
+<style>
+</style>
+<script>
+</script>
 </head>
-<body>
+<body onload="bdyOnLoad()">
+<div id="xtopdiv">
+  xtop
+</div>
+<div id="right-panel">
+  <div id="inputs" name="ninputs">
+    <form>
+    <p class="lblx"><span>Mileage rate:</span> <span>$<input class="inputx" id="xmr" type="text" value="57.5"></span><span>Date</span><span><input class="inputxx" id="xdt" style="width:100px" type="text"></span></p>
+    <p class="lblx"><span>Points on route</span> <span style="margin-bottom:2px;"><button class="xsubmit" id="xclearbtn" onclick="ClearEntries()" style="size:12;" title=
+    "Delete Current Points on Route, so that you can enter new ones" type="button"><span style="margin-bottom:2px;"><span style="margin-bottom:2px;">Clear Points</span></span>
+      </button>
+      </span>
+    </p>
+    <p style="margin:0;border:0;">
+      <textarea autofocus="" class="inputx" cols="40" id="xdest" onmouseout="" onmouseover="" rows="4" title="Enter 2 lines between each address">
+Post Office
+1007 Green St SE
+Conyers, GA 30012
 
-<h1>This is a Heading</h1>
-<p>This is a paragraph.</p>
+Sleep Inn
+181 Metromont Road
+Hiram, GA, 30141
 
+Post Office
+1040 Pio Nono Ave
+Macon, GA 31204
+
+Post Office
+904 Russell Pkwy
+Warner Robins, GA 31088</textarea>
+    </p>
+    </form>
+    <form id = "options" name="noptions">
+      Circle Back?
+      <input id="cBack" onchange="" title="Adds your starting point as your final stop" type="checkbox"> Minus AM Drive?
+      <input id="driveamyn" title="Subtracts distance of your normal morning commute when your start from home" type="checkbox"> Minus PM Drive?
+      <input id="drivepmyn" title="Subtracts your normal evening commute when your final stop is home" type="checkbox">
+
+<button title = ""Enter Your 1. Home Address and 2. Work Address, Then, press here  onclick="whgetMiles()">Set Distance Daily Commute</button>
+
+    </form>
+    <p>Click the "Try it" button to find out whether the checkbox is checked, or not.</p>
+    <button onclick="tryit()">Try it</button>
+    <p id="demo"></p>
+    <p class="lblx">
+      <button class="xsubmit" id="xcalcbtn" onclick="getMiles2()" type="button">Compute Mileage</button>
+    </p>
+    <p>Look up my CURRENT LOCATION and set it as the:</p>
+    <p>
+      <button class="xsubmit" onclick="callgeox2('start')" type="button">First Stop</button>
+      <button class="xsubmit" onclick="callgeox2('stop')" type="button">Last Stop</button>
+    </p>
+  </div>
+  <div>
+    <strong>Results</strong>
+  </div>
+  <div id="output"></div>
+</div>
+<div id="map"></div>
+<div id="xbottom">
+  bottom
+</div>
+<div id="xtest" onclick="xtest()">
+  xtest
+</div>
+<div id="whdiv">
+  <p id="homeadd" onclick="whgetMiles()">home</p>
+  <p id="workadd">work</p>
+  <p id="whmiles">miles</p>
+</div>
+<p>
+<a href="https://www.google.com/search?as_q=Stottlemyer+&amp;+Associates,+LLC,+3131+East+Shadowlawn+Avenue,+Atlanta,+GA+30305" id="addoptgs" target="_blank" title="https://www.google.com/search?as_q=Stottlemyer+&amp;+Associates,+LLC,+3131+East+Shadowlawn+Avenue,+Atlanta,+GA+30305">Google 
+search</a>
+</p>
+<p>
+<p>
+<a href="https://maps.google.com//maps/dir/2485+Kingsglen+Ct,+Doraville,+GA+30360,/100+Alabama+St+SW,+Atlanta,+GA+30303/2485+Kingsglen+Ct,+Doraville,+GA+30360" id="addoptgms" target="_blank" title="null">Google Maps Search</a>
+</p>
+<p class="lblx">
+                <span class="lblx" id="yemail">Email:</span>
+                <span><input class="inputxx" id="txtEmail" name="email" type="text"></span>
+                <span><button class="xsubmit" onclick="emailSend()" type="button"><span><span>Mail to me</span>
+                <span></button></span>
+            </p>
+            <p><a href="mailto:info@example.com" id="xmail">mail link</a></p>
+<span><a href="http://www.cnn.com" id="gdir" target="_blank" title="Conducts a search for the route Google Maps">Google route directions</a></span>
+<!-- Replace the value of the key parameter with your own API key. -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBdiqYe-t8TZKK5Z_6qgSlRcCt_C_dDMA">
+
+
+</script>
+<script>
+var xdest = "", homeadd = "", workadd = "";
+var lstf = false;
+var addarr = [];
+var orgarr = [];
+var destarr = [];
+var fms = "";
+var xstop = "";
+var fss = "";
+
+function bdyOnLoad () {
+    lstfSet();
+   if (lstf = true) {
+   lsItemsOnLoad();
+   }
+   //alert(lstf);
+}
+function lstfSet() {
+  if (typeof(Storage) !== "undefined") {
+    lstf = true;
+    //alert(lstf);
+  } else {
+  lstf = false}
+}
+function lsItemsOnLoad() {
+
+  if (localStorage["xdest"]) {
+    xdest = localStorage.getItem("xdest");
+  }
+
+  if (localStorage["homeadd"]) {
+    homeadd = localStorage.getItem("homeadd");
+  }
+
+  if (localStorage["workadd"]) {
+    workadd = localStorage.getItem("workadd");
+  }
+
+}
+
+//function bdyBeforeUnload() {
+//alert("bye");
+//}
+function isDate(val) {
+  var d = new Date(val);
+  return !isNaN(d.valueOf());
+}
+function tryit () {
+   var xxx = localStorage.getItem("homeadd") + "<br>";
+   xxx += localStorage.getItem("workadd") + "<br>";
+   xxx += localStorage.getItem("whmiles") + "<br>";
+   document.getElementById("homeadd").innerHTML = xxx;
+}
+
+function stripBothEnds(str, ss) {
+  if (str.lastIndexOf(ss) + ss.length === str.length) {
+    str = str.slice(0, str.length - ss.length);
+  }
+  var pos = str.indexOf(ss);
+  if (pos === 0) {
+    str = str.replace(ss, "");
+  }
+  return str;
+}
+
+
+function tboxToHtm(str2) {
+  var str = "";
+  str = str2;
+  str2 = str2.trim();
+  str = str.replace(/(\r\n|\n|\r)/gm, "<br>");
+  str = str.replace(/;\s/gm, "<br>");
+  str = str.replace(/;/g, "<br>");
+  str = str.replace(/(\r\n|\n|\r)/gm, "<br>");
+  str = str.replace(/;\s/gm, "<br>");
+  str = str.replace(/;/g, "<br>");
+  str = str.replace("<br><br><br>", "<br><br>");
+  str = str.replace("<br><br><br>", "<br><br>");
+  str = stripBothEnds(str, "<br><br>");
+  str = stripBothEnds(str, "<br>");
+  // alert(str);
+  return str;
+}
+
+function deleteMarkers(markersArray) {
+  for (var i = 0; i < markersArray.length; i++) {
+    markersArray[i].setMap(null);
+  }
+  markersArray = [];
+}
+Number.prototype.toHHMMSS = function() {
+  var hours = Math.floor(this / 3600) < 10 ? ("00" + Math.floor(this / 3600)).slice(-2) : Math.floor(this / 3600);
+  var minutes = ("00" + Math.floor((this % 3600) / 60)).slice(-2);
+  var seconds = ("00" + (this % 3600) % 60).slice(-2);
+  return hours + ":" + minutes //+ ":" + seconds;
+}
+
+
+function whInitMap(orgarr, destarr) {
+  //alert(destarr);
+  var service = new google.maps.DistanceMatrixService();
+  service.getDistanceMatrix({
+    origins: orgarr,
+    destinations: destarr,
+    travelMode: google.maps.TravelMode.DRIVING,
+    unitSystem: google.maps.UnitSystem.IMPERIAL,
+    avoidHighways: false,
+    avoidTolls: false,
+    avoidTolls: false,
+  }, callbackwh);
+}
+
+function callbackwh(response, status) {
+  if (status == 'OK') {
+    //alert ("hi");
+    var origins = response.originAddresses;
+    var destinations = response.destinationAddresses;
+    $("#homeadd").html("home: " + origins[0]);
+    $("#workadd").html("work: " + destinations[0]);
+    homeadd =origins[0];
+    workadd=destinations[0];
+    localStorage.setItem("homeadd", origins[0].replace(", USA", ""));
+    localStorage.setItem("workadd", destinations[0].replace(", USA", ""));
+    //$("#whmiles").html("Distance: ");
+    for (var i = 0; i < origins.length; i++) {
+      var results = response.rows[i].elements;
+      for (var j = 0; j < results.length; j++) {
+        var element = results[j];
+        var distance = element.distance.text;
+        var duration = element.duration.text;
+        var from = origins[i];
+        var to = destinations[j];
+        var xmn = element.distance.value;
+        xmn = xmn / 1609.344;
+        xmn = xmn.toFixed(2);
+        var xms = xmn.toString();
+        localStorage.setItem("whmiles", xms);
+        $("#whmiles").html("Distance: " + xms);
+        localStorage.setItem("whmiles", xms)
+      }
+    }
+  }
+}
+
+function whgetMiles() {
+  var s = document.getElementById("xdest").value;
+  s = s.trim();
+  var ss = tboxToHtm(s);
+  //alert("xxx");  
+  addarr = ss.split("<br><br>");
+  for (i = 0; i < addarr.length; i++) {
+    addarr[i] = addarr[i].replace("<br>", ", ");
+  }
+  if (addarr.length === 2) {
+    orgarr = addarr.slice(0, addarr.length - 1);
+    destarr = addarr.slice(1, addarr.length);
+    whInitMap(orgarr, destarr);
+  } else {
+    alert("Must enter 2 addresses, home, followed by two lines, followed by work")
+  }
+
+}
+
+
+//function doalert(checkboxElem) {
+/*if (checkboxElem.checked) {
+  alert ("hi");
+} else {
+  alert ("bye");
+}*/
+//}
+
+function reprocDMatrixTxt2(str) {
+  str = str.replace(", USA", "");
+  var pos = str.lastIndexOf(", ");
+  var str1 = str.substr(0, pos);
+  var str2 = str.substr(pos + 1, str.length);
+  pos = str1.lastIndexOf(", ");
+  if (pos > 0) {
+    str1 = str1.substr(0, pos) + "; " + str1.substr(pos + 1, str.length);
+    str = str1 + ", " + str2;
+  }
+  str = str.replace("  ", " ");
+  return str;
+}
+
+function newAddFormat2(xat, xab, xbr) {
+  //alert(xat);
+  xat = getAddTop2(xat, xbr);
+  xab = reprocDMatrixTxt2(xab);
+  xat + xbr + xab;
+  //alert(xat);
+  return xat;
+}
+
+function getAddTop2(s, br) {
+  //alert(s);
+  var sf = s;
+  var sar = sf.split("<br>");
+  //alert(sar.length);
+  if (sar.length > 2) {
+    sf = sar[0];
+    for (i = 1; i < sar.length - 2; i++) {
+      sf += br + sar[i];
+    }
+  }
+//alert(sf);
+  return sf;
+}
+
+  function initMap(xyz) {
+    var bounds = new google.maps.LatLngBounds;
+    var markersArray = [];
+    var destinationIcon = 'https://chart.googleapis.com/chart?' +
+      'chst=d_map_pin_letter&chld=D|FF0000|000000';
+    var originIcon = 'https://chart.googleapis.com/chart?' +
+      'chst=d_map_pin_letter&chld=O|FFFF00|000000';
+    var map = new google.maps.Map(document.getElementById('map'), {
+      center: {
+        lat: 55.53,
+        lng: 9.4
+      },
+      zoom: 10
+    });
+    var geocoder = new google.maps.Geocoder;
+    var service = new google.maps.DistanceMatrixService;
+    service.getDistanceMatrix({
+      origins: orgarr,
+      destinations: destarr,
+      travelMode: 'DRIVING',
+      unitSystem: google.maps.UnitSystem.IMPERIAL,
+      avoidHighways: false,
+      avoidTolls: false
+    }, function(response, status) {
+      if (status !== 'OK') {
+        alert('Error was: ' + status);
+      } else {
+        fms = "";
+        var gdUrl = "";
+        var kmailUrl = "";
+        var jDestTxt = "";
+        var originList = response.originAddresses;
+        var destinationList = response.destinationAddresses;
+        var opd = document.getElementById('output');
+        opd.innerHTML = '';
+        var os = "";
+        var ds = "";
+        var ts = "";
+        var ms = "";
+        var rs = "";
+        var sDuration = "";
+        var xtd = "</td><td>";
+        var tr1 = "<tr><td>";
+        var tr2 = "<td></tr>";
+        var ydt = getDateAsText();
+        var ylb = "%0A";
+        var ytab = "%09";
+        if (isDate(document.getElementById('xdt').value)) {
+          ydt = document.getElementById('xdt').value;
+        }
+
+        var nDuration = 0;
+        var nTotalCost = 0;
+        var nTotalMiles = 0;
+        var nTotalDuration = 0;
+        var nmr = 0;
+        var nMiles = 0;
+        var nCost = 0;
+        nmr = document.getElementById("xmr").value;
+        nmr = nmr / 100;
+        nmr = nmr.toFixed(2);
+        deleteMarkers(markersArray);
+        var showGeocodedAddressOnMap = function(asDestination) {
+          var icon = asDestination ? destinationIcon : originIcon;
+          return function(results, status) {
+            if (status === 'OK') {
+              map.fitBounds(bounds.extend(results[0].geometry.location));
+              markersArray.push(new google.maps.Marker({
+                map: map,
+                position: results[0].geometry.location,
+                icon: icon
+              }));
+            } else if (status === 'ZERO_RESULTS') {
+              alert("ZERO_RESULTS - Check your addresses. Google could not plot a route. ");
+            } else if (status === 'NOT_FOUND') {
+              alert("NOT_FOUND - Check your addresses. Google could not plot a route. ");
+            } else if (status === 'MAX_ROUTE_LENGTH_EXCEEDED') {
+              alert("MAX_ROUTE_LENGTH_EXCEEDED - the requested route is too long and cannot be processed")
+            } else {
+              alert('Geocode was not successful due to: ' + status);
+            }
+          };
+        };
+        ds = newAddFormat2(addarr[0], destinationList[0], "<br>");
+        ds = ds.replace("<br>", "; ");
+        addarr[0] = ds;
+gdUrl = ds;
+//kmailUrl = ds;
+//alert(ds);
+        //ds = "";
+        fss += addarr[0] + "</p><p>";
+        //alert(originList[0]);
+        for (var i = 0; i < originList.length; i++) {
+          var results = response.rows[i].elements;
+          geocoder.geocode({
+              'address': originList[i]
+            },
+            showGeocodedAddressOnMap(false));
+          geocoder.geocode({
+              'address': destinationList[i]
+            },
+            showGeocodedAddressOnMap(true));
+          //document.getElementById("xbottom").innerHTML = destinationList[i];
+          //jDestTxt = results[i].distance.text;
+          nMiles = results[i].distance.value;
+          nMiles = nMiles / 1609.344;
+          nDuration = results[i].duration.value;
+          sDuration = String(nDuration.toHHMMSS());
+          nMiles = nMiles.toFixed(2);
+          nCost = nMiles * nmr;
+          nCost = nCost.toFixed(2);
+          nTotalCost = Number(nTotalCost) + Number(nCost);
+          nTotalCost = parseFloat(nTotalCost).toFixed(2);
+          nTotalMiles += Number(nMiles);
+          nTotalMiles = parseFloat(nTotalMiles).toFixed(2);
+          nTotalDuration += Number(nDuration);
+          os = newAddFormat2(addarr[i], originList[i], "<br>");
+          os = os.replace("<br>", "; ")
+          ds = newAddFormat2(addarr[i + 1], destinationList[i], "<br>");
+          ds = ds.replace("<br>", "; ")
+          ms = results[i].distance.text;
+          ts = results[i].duration.text;
+          rs = tr1 + ydt + xtd + " " + nMiles + xtd + " " + "$" + nCost + xtd + os + xtd + ds + tr2;
+          fms += rs;
+
+
+          rs = ydt + ";" + nMiles + ";" + "$" + nCost + ";" + os.replace(/; /g, ", ") + ";" + ds.replace(/; /g, ", ") + "endofrow";
+          kmailUrl += rs;
+
+          fss += "</p><p>" + ds;
+          gdUrl += "/" + ds;
+        }
+        //kmailUrl = gdUrl.replace("/", ";");
+        //document.getElementById("xtest").innerHTML += os;
+        if (driveamyn.checked) {
+          if (localStorage["whmiles"]) {
+            rs = localStorage.getItem("whmiles");
+            nMiles = Number(rs);
+            nCost = Number(nMiles * nmr);
+            nTotalCost -= Number(nCost);
+            nTotalCost = nTotalCost.toFixed(2);
+            nCost = nCost.toFixed(2);
+            nMiles = Number(0 - nMiles);
+            nCost = Number(0 - nCost);
+            nTotalMiles += Number(nMiles);
+            nTotalMiles = parseFloat(nTotalMiles).toFixed(2);
+            rs = tr1 + ydt + xtd + nMiles + xtd + nCost.toString().replace("-", "-$") + xtd + "H: " + localStorage.getItem("homeadd") + xtd + "W: " +   localStorage.getItem("workadd") + tr2;
+            fms += rs;
+
+     //rs = ydt + ";" + nMiles + ";" + nCost.toString().replace("-", "-$") + ";" + "H: " + localStorage.getItem("homeadd").replace(/; /g, ", ") + ";" + "W: " +   localStorage.getItem("workadd").replace(/; /g, ", ") + "endofrow";
+rs = ydt + ";" + nMiles + ";" + nCost.toString().replace("-", "-$") + ";" + "H: " + localStorage.getItem("homeadd").replace(/; /g, ", ") + ";" + "W: " +   localStorage.getItem("workadd").replace(/; /g, ", ") + "endofrow";
+            kmailUrl += rs;
+
+            document.getElementById("output").innerHTML = fss;
+          }
+        }
+
+        if (drivepmyn.checked) {
+          if (localStorage["whmiles"]) {
+            rs = localStorage.getItem("whmiles");
+            nMiles = Number(rs);
+            nCost = Number(nMiles * nmr);
+            nTotalCost -= Number(nCost);
+            nTotalCost = nTotalCost.toFixed(2);
+            nCost = nCost.toFixed(2);
+            nMiles = Number(0 - nMiles);
+            nCost = Number(0 - nCost);
+            nTotalMiles += Number(nMiles);
+            nTotalMiles = parseFloat(nTotalMiles).toFixed(2);
+            rs = tr1 + ydt + xtd + nMiles + xtd  + nCost.toString().replace("-", "-$") + xtd + "W: " + localStorage.getItem("workadd") + xtd + "H: " + localStorage.getItem("homeadd") + tr2;
+            fms += rs;
+            rs = "<col align='right'><col align='right'><col align='right'><col align='right'><col align='right'>";
+            fms += rs;
+
+            rs = ydt + ";" + nMiles + ";" + nCost.toString().replace("-", "-$") + ";" + "H: " + localStorage.getItem("workadd").replace(/; /g, ", ") + ";" + "W: " +   localStorage.getItem("homeadd").replace(/; /g, ", ") + "endofrow";
+            kmailUrl += rs;
+
+          }
+        }
+        var ntcStr = "";
+        if (nTotalCost > 0) {
+          ntcStr = "$" + nTotalCost.toString();
+        } else {
+          ntcStr = nTotalCost.toFixed(2).replace("-", "-$");
+        }
+        rs = tr1 + "TOTALS" + xtd + nTotalMiles.toString() + xtd + ntcStr + xtd + xtd + tr2;
+        fms += rs;
+gdUrl = gdUrl.replace(/; /g, ", ");
+gdUrl = gdUrl.replace(/; /g, ", ");
+gdUrl = "https://maps.google.com//maps/dir/" + gdUrl;
+gdUrl = encodeURI(gdUrl);
+document.getElementById("addoptgms").href = gdUrl;
+        fss = "<p>" + fss + "</p>";
+        document.getElementById("output").innerHTML = fss;
+        setTop(fms);
+alert(kmailUrl);
+kmailUrl = encodeURI(kmailUrl);
+alert(kmailUrl);
+kmailUrl = kmailUrl.replace(/endofrow/g, "%0A");
+alert(kmailUrl);
+var kmailUrl = "mailto:" + document.getElementById("txtEmail").value +
+            "?Subject=Mileage&body=" + kmailUrl;
+        document.getElementById("xmail").href = kmailUrl;
+      }
+    });
+  }
+
+
+
+function initMapGeo(xstop) {
+  //alert(xstop);
+  var bounds = new google.maps.LatLngBounds;
+  var markersArray = [];
+  var destinationIcon = 'https://chart.googleapis.com/chart?' +
+    'chst=d_map_pin_letter&chld=D|FF0000|000000';
+  var originIcon = 'https://chart.googleapis.com/chart?' +
+    'chst=d_map_pin_letter&chld=O|FFFF00|000000';
+  var map = new google.maps.Map(document.getElementById('map'), {
+    center: {
+      lat: 55.53,
+      lng: 9.4
+    },
+    zoom: 10
+  });
+  var geocoder = new google.maps.Geocoder;
+  var service = new google.maps.DistanceMatrixService;
+  service.getDistanceMatrix({
+    origins: orgarr,
+    destinations: destarr,
+    travelMode: 'DRIVING',
+    unitSystem: google.maps.UnitSystem.IMPERIAL,
+    avoidHighways: false,
+    avoidTolls: false
+  }, function(response, status) {
+    if (status !== 'OK') {
+      alert('Error was: ' + status);
+    } else {
+      fms = "";
+      var originList = response.originAddresses;
+      if (xstop === "start") {
+        var hhh = originList[0].replace(", USA", "");
+        //alert(hhh);
+        hhh = reprocDMatrixTxt(hhh).replace("  ", " ");
+        hhh = hhh.replace("; ", "\n");
+        document.getElementById("xdest").value = hhh + "\n\n" + document.getElementById("xdest").value;
+      }
+      if (xstop === "stop") {
+        var hhh = originList[0].replace(", USA", "");
+        hhh = reprocDMatrixTxt(hhh).replace("  ", " ");
+        hhh = "\n\n" + hhh.replace("; ", "\n");
+        document.getElementById("xdest").value = document.getElementById("xdest").value.trim() + hhh;
+      }
+      var destinationList = response.destinationAddresses;
+      var showGeocodedAddressOnMap = function(asDestination) {
+        var icon = asDestination ? destinationIcon : originIcon;
+        return function(results, status) {
+          if (status === 'OK') {
+            map.fitBounds(bounds.extend(results[0].geometry.location));
+            markersArray.push(new google.maps.Marker({
+              map: map,
+              position: results[0].geometry.location,
+              icon: icon
+            }));
+          } else {
+            alert('Geocode was not successful due to: ' + status);
+          }
+        };
+      };
+
+      for (var i = 0; i < originList.length; i++) {
+        var results = response.rows[i].elements;
+        geocoder.geocode({
+            'address': originList[i]
+          },
+          showGeocodedAddressOnMap(false));
+        geocoder.geocode({
+            'address': destinationList[i]
+          },
+          showGeocodedAddressOnMap(true));
+      }
+    }
+  });
+}
+
+
+
+
+function getMiles2() {
+  var s = document.getElementById("xdest").value;
+  s = s.trim();
+  var ss = tboxToHtm(s);
+  //alert(ss);  
+  addarr = ss.split("<br><br>");
+  for (i = 0; i < addarr.length; i++) {
+    addarr[i] = addarr[i].replace("<br>", "; ");
+  }
+  var x = document.getElementById("cBack").checked;
+  if (x === true) {
+    addarr.push(addarr[0]);
+  }
+  //if (document.getElementById("normalCommute").checked === true) {
+  //  var kgoing = "";
+  //  if (addarr.length !== 2) {
+  //    kgoing = "You need to enter 2 addresses: 1. Home & 2. Work, separated by 2 lines"
+  //  }
+  //  document.getElementById("xtest").innerHTML = kgoing;
+  //   document.getElementById("normalCommute").checked = false;
+  //}
+  if (addarr.length > 1) {
+       orgarr = addarr.slice(0, addarr.length - 1);
+       destarr = addarr.slice(1, addarr.length);
+       initMap("");} else {
+       alert("Enter at least 2 addresses. Separate each with 2 lines.");
+  }
+}
+
+
+function setTop(ystr) {
+  var bstr = "";
+  for (i = 0; i < addarr.length; i++) {
+    bstr += addarr[i] + "<br><br>";
+  }
+  //document.getElementById("xbottom").innerHTML = bstr;
+  //alert("edn" + addarr)
+  var xstr = "";
+  xstr = "<tr><th>Date</th><th>Miles</th><th>Cost</th><th>Start</th><th>Stop</th></tr>" + ystr;
+  xstr = "<Table id=" + String.fromCharCode(34) + "qlist" + String.fromCharCode(34) + " className=" + String.fromCharCode(34) + "llist" + String.fromCharCode(34) + ">" + xstr + "</table>";
+  //alert(xstr);
+  document.getElementById("xtopdiv").innerHTML = xstr;
+}
+
+function getDateAsText() {
+  var date = new Date();
+  var day = date.getDate();
+  var month = date.getMonth() + 1;
+  var year = date.getFullYear();
+  var syear = year.toString();
+  syear = syear.slice(2, 4);
+  if (month < 10) month = "0" + month;
+  if (day < 10) day = "0" + day;
+  var today = month + "/" + day + "/" + syear;
+  return today;
+}
+
+function callgeox2(rrr) {
+  //alert("geox2")
+  xstop = rrr;
+  var mls = "";
+  mls = rrr;
+  geox2();
+}
+
+function geox2() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(mygeoyes2);
+  } else {
+    alert("no");
+  }
+}
+
+function mygeoyes2(position) {
+  var xlat = position.coords.latitude;
+  var xlong = position.coords.longitude;
+  var originsArr = [];
+  var destinArr = [];
+  orgarr[0] = position.coords.latitude + ", " + position.coords.longitude;
+  destarr[0] = position.coords.latitude + ", " + position.coords.longitude;
+  //alert(orgarr[0]);
+  initMapGeo(xstop);
+}
+
+function mygeono2() {
+  alert("Could not find address");
+}
+
+
+function callgeox(rrr) {
+  xstop = rrr;
+  var mls = "";
+  mls = rrr;
+  geox();
+}
+
+function geox() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(mygeoyes);
+  } else {
+    alert("no");
+  }
+}
+
+function mygeoyes(position) {
+  var xlat = position.coords.latitude;
+  var xlong = position.coords.longitude;
+  var originsArr = [];
+  var destinArr = [];
+  orgarr[0] = position.coords.latitude + ", " + position.coords.longitude;
+  destarr[0] = position.coords.latitude + ", " + position.coords.longitude;
+  //    //alert(orgarr[0]);
+  initMap("x");
+}
+
+function mygeono() {
+  alert("Could not find address");
+}
+
+</script>
 </body>
 </html>
-Try it Yourself »
